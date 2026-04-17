@@ -1,14 +1,8 @@
 import type { Plugin } from '@opencode-ai/plugin';
 import type { Model as ModelV2 } from '@opencode-ai/sdk/v2';
 import { fetchModels, isQwenModel } from './models.ts';
-
-let cachedModels: Record<string, ModelV2> | null = null;
-let fetchPromise: Promise<Record<string, ModelV2>> | null = null;
-
-export function _resetProviderCacheForTesting(): void {
-  cachedModels = null;
-  fetchPromise = null;
-}
+import { BASE_URL } from './constants.ts';
+import { cachedModels, fetchPromise, setCachedModels, setFetchPromise } from './cache.ts';
 
 export const NeuralWattPlugin: Plugin = async ({ client }) => {
   function logError(message: string, error?: unknown): void {
@@ -30,6 +24,17 @@ export const NeuralWattPlugin: Plugin = async ({ client }) => {
   }
 
   return {
+    config: async (config) => {
+      config.provider = config.provider ?? {};
+      config.provider.neuralwatt = config.provider.neuralwatt ?? {
+        npm: '@ai-sdk/openai-compatible',
+        name: 'NeuralWatt',
+        options: {
+          baseURL: BASE_URL,
+        },
+      };
+    },
+
     auth: {
       provider: 'neuralwatt',
       loader: async (auth) => {
@@ -40,7 +45,6 @@ export const NeuralWattPlugin: Plugin = async ({ client }) => {
         const { key } = credentials;
         return {
           fetch: async (input: RequestInfo | URL, init?: RequestInit) => {
-            // Merge headers from both a Request object and init, then inject Authorization
             const headers = new Headers(input instanceof Request ? input.headers : undefined);
             if (init?.headers) {
               new Headers(init.headers).forEach((value, name) => {
@@ -67,7 +71,6 @@ export const NeuralWattPlugin: Plugin = async ({ client }) => {
         },
       ],
     },
-
     provider: {
       id: 'neuralwatt',
       models: async (_provider, ctx) => {
@@ -83,9 +86,9 @@ export const NeuralWattPlugin: Plugin = async ({ client }) => {
           return {};
         }
 
-        fetchPromise = fetchModels(ctx.auth.key, logWarning)
+        const promise = fetchModels(ctx.auth.key, logWarning)
           .then((models) => {
-            cachedModels = models;
+            setCachedModels(models);
             return models;
           })
           .catch((err) => {
@@ -93,13 +96,13 @@ export const NeuralWattPlugin: Plugin = async ({ client }) => {
             return {} as Record<string, ModelV2>;
           })
           .finally(() => {
-            fetchPromise = null;
+            setFetchPromise(null);
           });
 
-        return fetchPromise;
+        setFetchPromise(promise);
+        return promise;
       },
     },
-
     'experimental.chat.system.transform': async (input, output) => {
       const isQwen = isQwenModel(input.model.id);
       const hasMultiple = output.system.length > 1;
@@ -111,3 +114,5 @@ export const NeuralWattPlugin: Plugin = async ({ client }) => {
     },
   };
 };
+
+export default NeuralWattPlugin;

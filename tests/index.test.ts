@@ -84,7 +84,7 @@ describe('NeuralWattPlugin provider hook', () => {
   const originalFetch = globalThis.fetch;
 
   afterEach(async () => {
-    const { _resetProviderCacheForTesting } = await import('../src/index.ts');
+    const { _resetProviderCacheForTesting } = await import('../src/cache.ts');
     _resetProviderCacheForTesting();
     vi.restoreAllMocks();
     globalThis.fetch = originalFetch;
