@@ -1,17 +1,35 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import type { Plugin } from '@opencode-ai/plugin';
+import type { Plugin, ProviderHookContext } from '@opencode-ai/plugin';
+import type { Provider } from '@opencode-ai/sdk';
+import type { Provider as ProviderV2, Model } from '@opencode-ai/sdk/v2';
 
-// Typed test helpers to reduce `as any` usage
+// Typed test helpers - using `as unknown as T` for intentional partial test data
 function makeClient(toast?: ReturnType<typeof vi.fn>) {
   return { tui: { showToast: toast ?? vi.fn() } };
 }
 
-function makeApiCtx(key: string) {
+function makeApiCtx(key: string): ProviderHookContext {
   return { auth: { type: 'api' as const, key } };
 }
 
-function makeOAuthCtx() {
+function makeOAuthCtx(): ProviderHookContext {
   return { auth: { type: 'oauth' as const, refresh: 'r', access: 'a', expires: 0 } };
+}
+
+function makeNoAuthCtx(): ProviderHookContext {
+  return { auth: undefined };
+}
+
+function makeEmptyProvider(): ProviderV2 {
+  return {} as unknown as ProviderV2;
+}
+
+function makeEmptyLegacyProvider(): Provider {
+  return {} as unknown as Provider;
+}
+
+function makeModelInput(modelId: string): { sessionID?: string; model: Model } {
+  return { model: { id: modelId } as unknown as Model };
 }
 
 function mockFetchSuccess(data: Array<{ id: string }>) {
@@ -49,7 +67,7 @@ describe('NeuralWattPlugin auth hook', () => {
     } as unknown as Parameters<Plugin>[0]);
 
     const mockAuth = vi.fn().mockResolvedValue({ type: 'api', key: 'test-api-key' });
-    const result = await hooks.auth!.loader!(mockAuth, {} as any);
+    const result = await hooks.auth!.loader!(mockAuth, makeEmptyLegacyProvider());
 
     expect(result.fetch).toBeDefined();
     const realFetch = vi.fn().mockResolvedValue(new Response('ok'));
@@ -76,7 +94,9 @@ describe('NeuralWattPlugin auth hook', () => {
     const mockAuth = vi
       .fn()
       .mockResolvedValue({ type: 'oauth', refresh: 'r', access: 'a', expires: 0 });
-    await expect(hooks.auth!.loader!(mockAuth, {} as any)).rejects.toThrow('Unexpected auth type');
+    await expect(hooks.auth!.loader!(mockAuth, makeEmptyLegacyProvider())).rejects.toThrow(
+      'Unexpected auth type'
+    );
   });
 });
 
@@ -96,7 +116,7 @@ describe('NeuralWattPlugin provider hook', () => {
       client: makeClient(),
     } as unknown as Parameters<Plugin>[0]);
 
-    const result = await hooks.provider!.models!({} as any, { auth: undefined } as any);
+    const result = await hooks.provider!.models!(makeEmptyProvider(), makeNoAuthCtx());
     expect(result).toEqual({});
   });
 
@@ -106,7 +126,7 @@ describe('NeuralWattPlugin provider hook', () => {
       client: makeClient(),
     } as unknown as Parameters<Plugin>[0]);
 
-    const result = await hooks.provider!.models!({} as any, makeOAuthCtx() as any);
+    const result = await hooks.provider!.models!(makeEmptyProvider(), makeOAuthCtx());
     expect(result).toEqual({});
   });
 
@@ -120,10 +140,10 @@ describe('NeuralWattPlugin provider hook', () => {
     } as unknown as Parameters<Plugin>[0]);
 
     const ctx = makeApiCtx('test-key');
-    const result = await hooks.provider!.models!({} as any, ctx as any);
+    const result = await hooks.provider!.models!(makeEmptyProvider(), ctx);
     expect(Object.keys(result)).toContain('test-model');
 
-    const result2 = await hooks.provider!.models!({} as any, ctx as any);
+    const result2 = await hooks.provider!.models!(makeEmptyProvider(), ctx);
     expect(Object.keys(result2)).toContain('test-model');
     expect(fetch).toHaveBeenCalledTimes(1);
   });
@@ -137,9 +157,9 @@ describe('NeuralWattPlugin provider hook', () => {
     } as unknown as Parameters<Plugin>[0]);
 
     const ctx = makeApiCtx('key-a');
-    await hooks.provider!.models!({} as any, ctx as any);
+    await hooks.provider!.models!(makeEmptyProvider(), ctx);
 
-    const result = await hooks.provider!.models!({} as any, { auth: undefined } as any);
+    const result = await hooks.provider!.models!(makeEmptyProvider(), makeNoAuthCtx());
     expect(Object.keys(result)).toContain('cached-model');
   });
 
@@ -152,10 +172,10 @@ describe('NeuralWattPlugin provider hook', () => {
     } as unknown as Parameters<Plugin>[0]);
 
     const ctxA = makeApiCtx('key-a');
-    await hooks.provider!.models!({} as any, ctxA as any);
+    await hooks.provider!.models!(makeEmptyProvider(), ctxA);
 
     const ctxB = makeApiCtx('key-b');
-    const result = await hooks.provider!.models!({} as any, ctxB as any);
+    const result = await hooks.provider!.models!(makeEmptyProvider(), ctxB);
     expect(Object.keys(result)).toContain('shared-model');
     expect(fetch).toHaveBeenCalledTimes(1);
   });
@@ -173,8 +193,8 @@ describe('NeuralWattPlugin provider hook', () => {
     } as unknown as Parameters<Plugin>[0]);
 
     const ctx = makeApiCtx('test-key');
-    const p1 = hooks.provider!.models!({} as any, ctx as any);
-    const p2 = hooks.provider!.models!({} as any, ctx as any);
+    const p1 = hooks.provider!.models!(makeEmptyProvider(), ctx);
+    const p2 = hooks.provider!.models!(makeEmptyProvider(), ctx);
 
     resolveFetch!({
       ok: true,
@@ -200,18 +220,18 @@ describe('NeuralWattPlugin provider hook', () => {
     } as unknown as Parameters<Plugin>[0]);
 
     const ctx = makeApiCtx('bad-key');
-    const result = await hooks.provider!.models!({} as any, ctx as any);
+    const result = await hooks.provider!.models!(makeEmptyProvider(), ctx);
 
     expect(result).toEqual({});
 
     await Promise.resolve();
-    expect(mockToast).toHaveBeenCalledWith(
-      expect.objectContaining({
+    expect(mockToast).toHaveBeenCalledWith({
+      body: expect.objectContaining({
         title: expect.stringContaining('[ERROR]'),
         variant: 'error',
         message: expect.stringContaining('Network error'),
-      })
-    );
+      }),
+    });
   });
 
   it('handles malformed JSON response by returning empty', async () => {
@@ -228,14 +248,14 @@ describe('NeuralWattPlugin provider hook', () => {
     } as unknown as Parameters<Plugin>[0]);
 
     const ctx = makeApiCtx('test-key');
-    const result = await hooks.provider!.models!({} as any, ctx as any);
+    const result = await hooks.provider!.models!(makeEmptyProvider(), ctx);
 
     expect(result).toEqual({});
-    expect(mockToast).toHaveBeenCalledWith(
-      expect.objectContaining({
+    expect(mockToast).toHaveBeenCalledWith({
+      body: expect.objectContaining({
         variant: 'error',
-      })
-    );
+      }),
+    });
   });
 });
 
@@ -252,7 +272,7 @@ describe('NeuralWattPlugin system transform hook', () => {
 
     const output = { system: ['You are helpful.', 'Always be concise.'] };
     await hooks['experimental.chat.system.transform']!(
-      { model: { id: 'Qwen/Qwen3.5-397B-A17B-FP8' } } as any,
+      makeModelInput('Qwen/Qwen3.5-397B-A17B-FP8'),
       output
     );
     expect(output.system).toEqual(['You are helpful.\n\nAlways be concise.']);
@@ -266,7 +286,7 @@ describe('NeuralWattPlugin system transform hook', () => {
 
     const output = { system: ['You are helpful.', 'Always be concise.'] };
     await hooks['experimental.chat.system.transform']!(
-      { model: { id: 'moonshotai/Kimi-K2.5' } } as any,
+      makeModelInput('moonshotai/Kimi-K2.5'),
       output
     );
     expect(output.system).toEqual(['You are helpful.', 'Always be concise.']);
@@ -280,7 +300,7 @@ describe('NeuralWattPlugin system transform hook', () => {
 
     const output = { system: ['You are helpful.'] };
     await hooks['experimental.chat.system.transform']!(
-      { model: { id: 'Qwen/Qwen3.5-397B-A17B-FP8' } } as any,
+      makeModelInput('Qwen/Qwen3.5-397B-A17B-FP8'),
       output
     );
     expect(output.system).toEqual(['You are helpful.']);
@@ -294,7 +314,7 @@ describe('NeuralWattPlugin system transform hook', () => {
 
     const output = { system: [] as string[] };
     await hooks['experimental.chat.system.transform']!(
-      { model: { id: 'Qwen/Qwen3.5-397B-A17B-FP8' } } as any,
+      makeModelInput('Qwen/Qwen3.5-397B-A17B-FP8'),
       output
     );
     expect(output.system).toEqual([]);
@@ -307,10 +327,7 @@ describe('NeuralWattPlugin system transform hook', () => {
     } as unknown as Parameters<Plugin>[0]);
 
     const output = { system: ['Hello', '', '  ', 'World'] };
-    await hooks['experimental.chat.system.transform']!(
-      { model: { id: 'qwen-plus' } } as any,
-      output
-    );
+    await hooks['experimental.chat.system.transform']!(makeModelInput('qwen-plus'), output);
     expect(output.system).toEqual(['Hello\n\nWorld']);
   });
 });

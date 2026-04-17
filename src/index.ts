@@ -7,19 +7,21 @@ import { cachedModels, fetchPromise, setCachedModels, setFetchPromise } from './
 export const NeuralWattPlugin: Plugin = async ({ client }) => {
   function logError(message: string, error?: unknown): void {
     const errorStr = error instanceof Error ? error.toString() : String(error ?? '');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (client as any)?.tui?.showToast?.({
-      title: `[ERROR] ${message}`,
-      message: errorStr,
-      variant: 'error',
+    client.tui.showToast({
+      body: {
+        title: `[ERROR] ${message}`,
+        message: errorStr,
+        variant: 'error',
+      },
     });
   }
 
   function logWarning(message: string): void {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (client as any)?.tui?.showToast?.({
-      message: `[WARNING] ${message}`,
-      variant: 'warning',
+    client.tui.showToast({
+      body: {
+        message: `[WARNING] ${message}`,
+        variant: 'warning',
+      },
     });
   }
 
