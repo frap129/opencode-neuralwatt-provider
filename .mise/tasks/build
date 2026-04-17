@@ -4,4 +4,4 @@
 #MISE sources=["src/**/*"]
 #MISE outputs=["dist/index.js", "dist/index.d.ts"]
 
-bun build ./src/index.ts --outdir dist --target bun --external @ai-sdk/openai-compatible --external @opencode-ai/plugin --external @opencode-ai/sdk && tsc -p tsconfig.build.json
+rm -rf dist && bun build ./src/index.ts --outdir dist --target bun --external @ai-sdk/openai-compatible --external @opencode-ai/plugin --external @opencode-ai/sdk && tsc -p tsconfig.build.json
