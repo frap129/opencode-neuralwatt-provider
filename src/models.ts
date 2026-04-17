@@ -56,3 +56,41 @@ export function transformModel(id: string): ModelV2 {
     release_date: '',
   };
 }
+
+export async function fetchModels(
+  apiKey: string,
+  logWarning: (msg: string) => void
+): Promise<Record<string, ModelV2>> {
+  const headers = new Headers();
+  headers.set('Authorization', `Bearer ${apiKey}`);
+  const response = await fetch(`${BASE_URL}/models`, {
+    headers,
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch models: ${response.status} ${response.statusText}`);
+  }
+
+  const json = await response.json();
+
+  if (!json || !Array.isArray(json.data)) {
+    throw new Error('Invalid response: missing data array');
+  }
+
+  let invalidCount = 0;
+  const models: Record<string, ModelV2> = {};
+
+  for (const entry of json.data) {
+    if (typeof entry !== 'object' || entry === null || typeof entry.id !== 'string') {
+      invalidCount++;
+      continue;
+    }
+    models[entry.id] = transformModel(entry.id);
+  }
+
+  if (invalidCount > 0) {
+    logWarning(`Skipped ${invalidCount} invalid model entries`);
+  }
+
+  return models;
+}
