@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { BASE_URL, MODEL_CAPABILITIES, DEFAULT_CAPABILITIES } from '../src/constants';
+import { BASE_URL, MODEL_CAPABILITIES, DEFAULT_CAPABILITIES } from '../src/constants.ts';
 
 describe('constants', () => {
   it('has the correct BASE_URL', () => {
@@ -28,5 +28,21 @@ describe('constants', () => {
   it('does not have any -fast models in MODEL_CAPABILITIES', () => {
     const fastKeys = Object.keys(MODEL_CAPABILITIES).filter((k) => k.endsWith('-fast'));
     expect(fastKeys).toHaveLength(0);
+  });
+
+  it('every entry has valid limits where output <= context', () => {
+    for (const [_id, capabilities] of Object.entries(MODEL_CAPABILITIES)) {
+      expect(capabilities.limit.context).toBeGreaterThan(0);
+      expect(capabilities.limit.output).toBeGreaterThan(0);
+      expect(capabilities.limit.output).toBeLessThanOrEqual(capabilities.limit.context);
+    }
+  });
+
+  it('every entry with modalities has text output', () => {
+    for (const [, capabilities] of Object.entries(MODEL_CAPABILITIES)) {
+      if ('modalities' in capabilities && capabilities.modalities) {
+        expect(capabilities.modalities.output).toEqual(['text']);
+      }
+    }
   });
 });

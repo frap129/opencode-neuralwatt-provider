@@ -5,9 +5,14 @@ export function isQwenModel(modelId: string): boolean {
   return modelId.toLowerCase().includes('qwen');
 }
 
-export function deriveName(id: string): string {
-  const slashIndex = id.indexOf('/');
-  return slashIndex >= 0 ? id.slice(slashIndex + 1) : id;
+export function deriveModelName(modelId: string): string {
+  const lastSlashIndex = modelId.lastIndexOf('/');
+  if (lastSlashIndex < 0) {
+    return modelId;
+  }
+  const name = modelId.slice(lastSlashIndex + 1);
+  // Guard against trailing slash (e.g. "org/") by returning the full ID
+  return name || modelId;
 }
 
 export function transformModel(id: string): ModelV2 {
@@ -46,7 +51,7 @@ export function transformModel(id: string): ModelV2 {
       url: BASE_URL,
       npm: '@ai-sdk/openai-compatible',
     },
-    name: deriveName(id),
+    name: deriveModelName(id),
     capabilities: caps,
     cost: { input: 0, output: 0, cache: { read: 0, write: 0 } },
     limit: isKnown ? known.limit : DEFAULT_CAPABILITIES.limit,

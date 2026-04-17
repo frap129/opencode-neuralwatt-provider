@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { isQwenModel, deriveName, transformModel, fetchModels } from '../src/models';
+import { isQwenModel, deriveModelName, transformModel, fetchModels } from '../src/models.ts';
 
 describe('isQwenModel', () => {
   it('returns true for model IDs containing qwen (case-insensitive)', () => {
@@ -15,19 +15,28 @@ describe('isQwenModel', () => {
   });
 });
 
-describe('deriveName', () => {
+describe('deriveModelName', () => {
   it('strips org prefix before slash', () => {
-    const result = deriveName('Qwen/Qwen3.5-397B-A17B-FP8');
+    const result = deriveModelName('Qwen/Qwen3.5-397B-A17B-FP8');
     expect(result).toBeTruthy();
     expect(result).not.toContain('/');
   });
 
   it('returns full ID when no slash', () => {
-    expect(deriveName('gpt-oss-20b')).toBe('gpt-oss-20b');
+    expect(deriveModelName('gpt-oss-20b')).toBe('gpt-oss-20b');
   });
 
   it('returns non-empty string for any input', () => {
-    expect(deriveName('some-model')).toBeTruthy();
+    expect(deriveModelName('some-model')).toBeTruthy();
+  });
+
+  it('returns full ID for trailing slash (e.g. "org/")', () => {
+    expect(deriveModelName('org/')).toBe('org/');
+  });
+
+  it('strips all org prefixes with multiple slashes using last slash', () => {
+    const result = deriveModelName('org/team/model');
+    expect(result).toBe('model');
   });
 });
 
