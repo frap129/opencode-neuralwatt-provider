@@ -42,24 +42,26 @@ describe('deriveModelName', () => {
 
 describe('transformModel', () => {
   it('returns correct shape for a known model', () => {
-    const model = transformModel('Qwen/Qwen3.5-397B-A17B-FP8');
-    expect(model.id).toBe('Qwen/Qwen3.5-397B-A17B-FP8');
+    const model = transformModel('Qwen/Qwen3.6-35B-A3B');
+    expect(model.id).toBe('Qwen/Qwen3.6-35B-A3B');
     expect(model.providerID).toBe('neuralwatt');
-    expect(model.api.id).toBe('Qwen/Qwen3.5-397B-A17B-FP8');
+    expect(model.api.id).toBe('Qwen/Qwen3.6-35B-A3B');
     expect(model.api.url).toBe('https://api.neuralwatt.com/v1');
     expect(model.api.npm).toBe('@ai-sdk/openai-compatible');
     expect(model.name).toBeTruthy();
     expect(model.capabilities.reasoning).toBe(true);
     expect(model.capabilities.toolcall).toBe(true);
     expect(model.capabilities.temperature).toBe(true);
-    expect(model.limit.context).toBe(262144);
+    expect(model.capabilities.attachment).toBe(true);
+    expect(model.capabilities.input.image).toBe(true);
+    expect(model.limit.context).toBe(131072);
     expect(model.limit.output).toBe(32768);
     expect(model.status).toBe('active');
     expect(model.cost).toEqual({ input: 0, output: 0, cache: { read: 0, write: 0 } });
   });
 
   it('returns reasoning=true for known non-fast models', () => {
-    const model = transformModel('Qwen/Qwen3.5-397B-A17B-FP8');
+    const model = transformModel('Qwen/Qwen3.6-35B-A3B');
     expect(model.capabilities.reasoning).toBe(true);
   });
 
@@ -102,13 +104,19 @@ describe('transformModel', () => {
     expect(model.capabilities.input.image).toBe(true);
   });
 
+  it('sets attachment=true for Qwen3.6-35B-A3B with image input', () => {
+    const model = transformModel('Qwen/Qwen3.6-35B-A3B');
+    expect(model.capabilities.attachment).toBe(true);
+    expect(model.capabilities.input.image).toBe(true);
+  });
+
   it('sets interleaved to false', () => {
-    const model = transformModel('Qwen/Qwen3.5-397B-A17B-FP8');
+    const model = transformModel('Qwen/Qwen3.6-35B-A3B');
     expect(model.capabilities.interleaved).toBe(false);
   });
 
   it('sets toolcall=true for both known and unknown models', () => {
-    expect(transformModel('Qwen/Qwen3.5-397B-A17B-FP8').capabilities.toolcall).toBe(true);
+    expect(transformModel('Qwen/Qwen3.6-35B-A3B').capabilities.toolcall).toBe(true);
     expect(transformModel('totally-unknown-model').capabilities.toolcall).toBe(true);
   });
 });

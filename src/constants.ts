@@ -33,8 +33,9 @@ const _MODEL_CAPABILITIES = {
     limit: { context: 262144, output: 65536 },
     modalities: { input: ['text', 'image'] as const, output: ['text'] as const },
   },
-  'Qwen/Qwen3.5-35B-A3B': {
+  'Qwen/Qwen3.6-35B-A3B': {
     limit: { context: 131072, output: 32768 },
+    modalities: { input: ['text', 'image'] as const, output: ['text'] as const },
   },
   'openai/gpt-oss-20b': {
     limit: { context: 16384, output: 8192 },
