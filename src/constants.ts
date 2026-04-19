@@ -6,6 +6,7 @@ export interface ModelCapabilities {
     readonly input: ReadonlyArray<'text' | 'image'>;
     readonly output: ReadonlyArray<'text'>;
   };
+  readonly options?: Record<string, unknown>;
 }
 
 export const DEFAULT_CAPABILITIES: ModelCapabilities = {
@@ -36,6 +37,7 @@ const _MODEL_CAPABILITIES = {
   'Qwen/Qwen3.6-35B-A3B': {
     limit: { context: 131072, output: 32768 },
     modalities: { input: ['text', 'image'] as const, output: ['text'] as const },
+    options: { chat_template_kwargs: { preserve_thinking: true } },
   },
   'openai/gpt-oss-20b': {
     limit: { context: 16384, output: 8192 },

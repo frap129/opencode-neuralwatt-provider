@@ -56,7 +56,7 @@ export function transformModel(id: string): ModelV2 {
     cost: { input: 0, output: 0, cache: { read: 0, write: 0 } },
     limit: isKnown ? known.limit : DEFAULT_CAPABILITIES.limit,
     status: 'active',
-    options: {},
+    options: isKnown && known.options ? known.options : {},
     headers: {},
     release_date: '',
   };
