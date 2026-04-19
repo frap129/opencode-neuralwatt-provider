@@ -1,21 +1,14 @@
 import { describe, it, expect } from 'vitest';
-import { BASE_URL, MODEL_CAPABILITIES, DEFAULT_CAPABILITIES } from '../src/constants.ts';
+import { BASE_URL, MODEL_CAPABILITIES } from '../src/constants.ts';
 
 describe('constants', () => {
   it('has the correct BASE_URL', () => {
     expect(BASE_URL).toBe('https://api.neuralwatt.com/v1');
   });
 
-  it('has DEFAULT_CAPABILITIES with expected limits', () => {
-    expect(DEFAULT_CAPABILITIES.limit).toEqual({
-      context: 131072,
-      output: 32768,
-    });
-  });
-
   it('has MODEL_CAPABILITIES with known models', () => {
     expect(MODEL_CAPABILITIES['Qwen/Qwen3.5-397B-A17B-FP8']).toBeDefined();
-    expect(MODEL_CAPABILITIES['Qwen/Qwen3.5-397B-A17B-FP8'].limit.context).toBe(262144);
+    expect(MODEL_CAPABILITIES['Qwen/Qwen3.5-397B-A17B-FP8'].limit.output).toBe(32768);
   });
 
   it('has MODEL_CAPABILITIES with modalities for Kimi-K2.5', () => {
@@ -32,9 +25,8 @@ describe('constants', () => {
     });
   });
 
-  it('has Qwen3.6-35B-A3B with correct limits', () => {
+  it('has Qwen3.6-35B-A3B with correct output limit', () => {
     expect(MODEL_CAPABILITIES['Qwen/Qwen3.6-35B-A3B'].limit).toEqual({
-      context: 131072,
       output: 32768,
     });
   });
@@ -48,11 +40,9 @@ describe('constants', () => {
     expect(fastKeys).toHaveLength(0);
   });
 
-  it('every entry has valid limits where output <= context', () => {
+  it('every entry has a valid output limit', () => {
     for (const [_id, capabilities] of Object.entries(MODEL_CAPABILITIES)) {
-      expect(capabilities.limit.context).toBeGreaterThan(0);
       expect(capabilities.limit.output).toBeGreaterThan(0);
-      expect(capabilities.limit.output).toBeLessThanOrEqual(capabilities.limit.context);
     }
   });
 

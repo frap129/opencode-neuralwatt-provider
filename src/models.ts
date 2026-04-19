@@ -1,4 +1,4 @@
-import { BASE_URL, DEFAULT_CAPABILITIES, MODEL_CAPABILITIES } from './constants.ts';
+import { BASE_URL, MODEL_CAPABILITIES } from './constants.ts';
 import type { Model as ModelV2 } from '@opencode-ai/sdk/v2';
 
 export function isQwenModel(modelId: string): boolean {
@@ -15,7 +15,7 @@ export function deriveModelName(modelId: string): string {
   return name || modelId;
 }
 
-export function transformModel(id: string): ModelV2 {
+export function transformModel(id: string, maxModelLen: number | undefined): ModelV2 {
   const known = MODEL_CAPABILITIES[id];
   const isKnown = known !== undefined;
   const hasImageInput = isKnown && Boolean(known.modalities?.input.includes('image'));
@@ -43,6 +43,10 @@ export function transformModel(id: string): ModelV2 {
     interleaved: false as const,
   };
 
+  // Context comes from the API's max_model_len; output from the hardcoded map
+  const context = maxModelLen ?? 131072;
+  const output = isKnown ? known.limit.output : 32768;
+
   return {
     id,
     providerID: 'neuralwatt',
@@ -54,7 +58,7 @@ export function transformModel(id: string): ModelV2 {
     name: deriveModelName(id),
     capabilities: caps,
     cost: { input: 0, output: 0, cache: { read: 0, write: 0 } },
-    limit: isKnown ? known.limit : DEFAULT_CAPABILITIES.limit,
+    limit: { context, output },
     status: 'active',
     options: isKnown && known.options ? known.options : {},
     headers: {},
@@ -90,7 +94,7 @@ export async function fetchModels(
       invalidCount++;
       continue;
     }
-    models[entry.id] = transformModel(entry.id);
+    models[entry.id] = transformModel(entry.id, entry.max_model_len);
   }
 
   if (invalidCount > 0) {
