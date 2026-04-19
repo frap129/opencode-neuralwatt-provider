@@ -54,7 +54,37 @@ export const NeuralWattPlugin: Plugin = async ({ client }) => {
               });
             }
             headers.set('Authorization', `Bearer ${key}`);
-            return fetch(input, { ...init, headers });
+
+            let modifiedInit = init;
+
+            // Qwen models on vLLM require exactly one system message at the beginning
+            if (init?.body && typeof init.body === 'string') {
+              try {
+                const body = JSON.parse(init.body);
+                if (body.model && isQwenModel(body.model) && Array.isArray(body.messages)) {
+                  const systemMsgs = body.messages.filter(
+                    (m: { role: string }) => m.role === 'system'
+                  );
+                  const otherMsgs = body.messages.filter(
+                    (m: { role: string }) => m.role !== 'system'
+                  );
+
+                  // Merge all system messages into one
+                  if (systemMsgs.length > 1) {
+                    const mergedContent = systemMsgs
+                      .map((m: { content: string }) => m.content)
+                      .filter((c: string) => c.trim().length > 0)
+                      .join('\n\n');
+                    body.messages = [{ role: 'system', content: mergedContent }, ...otherMsgs];
+                    modifiedInit = { ...init, body: JSON.stringify(body) };
+                  }
+                }
+              } catch {
+                // If JSON parsing fails, use original body
+              }
+            }
+
+            return fetch(input, { ...modifiedInit, headers });
           },
         };
       },
@@ -104,15 +134,6 @@ export const NeuralWattPlugin: Plugin = async ({ client }) => {
         setFetchPromise(promise);
         return promise;
       },
-    },
-    'experimental.chat.system.transform': async (input, output) => {
-      const isQwen = isQwenModel(input.model.id);
-      const hasMultiple = output.system.length > 1;
-
-      if (isQwen && hasMultiple) {
-        const nonEmpty = output.system.filter((s) => s.trim().length > 0);
-        output.system = nonEmpty.length > 0 ? [nonEmpty.join('\n\n')] : [];
-      }
     },
   };
 };
