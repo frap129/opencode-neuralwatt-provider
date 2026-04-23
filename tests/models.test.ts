@@ -87,8 +87,12 @@ describe('transformModel', () => {
   });
 
   it('returns reasoning=false for known fast models', () => {
-    const model = transformModel('kimi-k2.6-fast', 262144);
-    expect(model.capabilities.reasoning).toBe(false);
+    expect(transformModel('kimi-k2.6-fast', 262144).capabilities.reasoning).toBe(false);
+    expect(transformModel('kimi-k2.5-fast', 262144).capabilities.reasoning).toBe(false);
+    expect(transformModel('qwen3.6-35b-fast', 131072).capabilities.reasoning).toBe(false);
+    expect(transformModel('qwen3.5-397b-fast', 262144).capabilities.reasoning).toBe(false);
+    expect(transformModel('glm-5-fast', 202752).capabilities.reasoning).toBe(false);
+    expect(transformModel('glm-5.1-fast', 202752).capabilities.reasoning).toBe(false);
   });
 
   it('returns reasoning=false for unknown models regardless of name', () => {

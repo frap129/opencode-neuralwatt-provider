@@ -32,6 +32,32 @@ describe('constants', () => {
     });
   });
 
+  it('has MODEL_CAPABILITIES with modalities for kimi-k2.5-fast', () => {
+    expect(MODEL_CAPABILITIES['kimi-k2.5-fast'].modalities).toEqual({
+      input: ['text', 'image'],
+      output: ['text'],
+    });
+  });
+
+  it('has MODEL_CAPABILITIES with modalities for qwen3.6-35b-fast', () => {
+    expect(MODEL_CAPABILITIES['qwen3.6-35b-fast'].modalities).toEqual({
+      input: ['text', 'image'],
+      output: ['text'],
+    });
+  });
+
+  it('has MODEL_CAPABILITIES with correct output limit for glm-5.1-fast', () => {
+    expect(MODEL_CAPABILITIES['glm-5.1-fast'].limit.output).toBe(65536);
+  });
+
+  it('has MODEL_CAPABILITIES with correct output limit for glm-5-fast', () => {
+    expect(MODEL_CAPABILITIES['glm-5-fast'].limit.output).toBe(65536);
+  });
+
+  it('has MODEL_CAPABILITIES with correct output limit for qwen3.5-397b-fast', () => {
+    expect(MODEL_CAPABILITIES['qwen3.5-397b-fast'].limit.output).toBe(32768);
+  });
+
   it('has MODEL_CAPABILITIES with modalities for Qwen3.6-35B-A3B', () => {
     expect(MODEL_CAPABILITIES['Qwen/Qwen3.6-35B-A3B'].modalities).toEqual({
       input: ['text', 'image'],

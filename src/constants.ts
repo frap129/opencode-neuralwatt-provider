@@ -13,7 +13,14 @@ const _MODEL_CAPABILITIES = {
   'Qwen/Qwen3.5-397B-A17B-FP8': {
     limit: { output: 32768 },
   },
+  'qwen3.5-397b-fast': {
+    limit: { output: 32768 },
+  },
   'moonshotai/Kimi-K2.5': {
+    limit: { output: 32768 },
+    modalities: { input: ['text', 'image'] as const, output: ['text'] as const },
+  },
+  'kimi-k2.5-fast': {
     limit: { output: 32768 },
     modalities: { input: ['text', 'image'] as const, output: ['text'] as const },
   },
@@ -28,7 +35,13 @@ const _MODEL_CAPABILITIES = {
   'zai-org/GLM-5.1-FP8': {
     limit: { output: 65536 },
   },
+  'glm-5.1-fast': {
+    limit: { output: 65536 },
+  },
   'zai-org/GLM-5-FP8': {
+    limit: { output: 65536 },
+  },
+  'glm-5-fast': {
     limit: { output: 65536 },
   },
   'MiniMaxAI/MiniMax-M2.5': {
@@ -39,6 +52,11 @@ const _MODEL_CAPABILITIES = {
     modalities: { input: ['text', 'image'] as const, output: ['text'] as const },
   },
   'Qwen/Qwen3.6-35B-A3B': {
+    limit: { output: 32768 },
+    modalities: { input: ['text', 'image'] as const, output: ['text'] as const },
+    options: { chat_template_kwargs: { preserve_thinking: true } },
+  },
+  'qwen3.6-35b-fast': {
     limit: { output: 32768 },
     modalities: { input: ['text', 'image'] as const, output: ['text'] as const },
     options: { chat_template_kwargs: { preserve_thinking: true } },
