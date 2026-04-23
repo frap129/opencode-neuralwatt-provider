@@ -22,6 +22,8 @@
       },
       "peerDependencies": {
         "@ai-sdk/openai-compatible": ">=0.1",
+        "@opencode-ai/plugin": "^1.4.7",
+        "@opencode-ai/sdk": "^1.4.7",
       },
     },
   },
