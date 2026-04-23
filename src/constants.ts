@@ -17,6 +17,14 @@ const _MODEL_CAPABILITIES = {
     limit: { output: 32768 },
     modalities: { input: ['text', 'image'] as const, output: ['text'] as const },
   },
+  'moonshotai/Kimi-K2.6': {
+    limit: { output: 32768 },
+    modalities: { input: ['text', 'image'] as const, output: ['text'] as const },
+  },
+  'kimi-k2.6-fast': {
+    limit: { output: 32768 },
+    modalities: { input: ['text', 'image'] as const, output: ['text'] as const },
+  },
   'zai-org/GLM-5.1-FP8': {
     limit: { output: 65536 },
   },

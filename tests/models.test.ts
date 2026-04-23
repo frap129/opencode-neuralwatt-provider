@@ -81,6 +81,16 @@ describe('transformModel', () => {
     expect(model.capabilities.reasoning).toBe(true);
   });
 
+  it('returns reasoning=true for moonshotai/Kimi-K2.6', () => {
+    const model = transformModel('moonshotai/Kimi-K2.6', 262144);
+    expect(model.capabilities.reasoning).toBe(true);
+  });
+
+  it('returns reasoning=false for known fast models', () => {
+    const model = transformModel('kimi-k2.6-fast', 262144);
+    expect(model.capabilities.reasoning).toBe(false);
+  });
+
   it('returns reasoning=false for unknown models regardless of name', () => {
     const model = transformModel('unknown-model-fast', undefined);
     expect(model.capabilities.reasoning).toBe(false);
@@ -116,6 +126,18 @@ describe('transformModel', () => {
 
   it('sets attachment=true for models with image input modality', () => {
     const model = transformModel('moonshotai/Kimi-K2.5', 262144);
+    expect(model.capabilities.attachment).toBe(true);
+    expect(model.capabilities.input.image).toBe(true);
+  });
+
+  it('sets attachment=true for moonshotai/Kimi-K2.6 with image input', () => {
+    const model = transformModel('moonshotai/Kimi-K2.6', 262144);
+    expect(model.capabilities.attachment).toBe(true);
+    expect(model.capabilities.input.image).toBe(true);
+  });
+
+  it('sets attachment=true for kimi-k2.6-fast with image input', () => {
+    const model = transformModel('kimi-k2.6-fast', 262144);
     expect(model.capabilities.attachment).toBe(true);
     expect(model.capabilities.input.image).toBe(true);
   });

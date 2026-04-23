@@ -18,6 +18,20 @@ describe('constants', () => {
     });
   });
 
+  it('has MODEL_CAPABILITIES with modalities for Kimi-K2.6', () => {
+    expect(MODEL_CAPABILITIES['moonshotai/Kimi-K2.6'].modalities).toEqual({
+      input: ['text', 'image'],
+      output: ['text'],
+    });
+  });
+
+  it('has MODEL_CAPABILITIES with modalities for kimi-k2.6-fast', () => {
+    expect(MODEL_CAPABILITIES['kimi-k2.6-fast'].modalities).toEqual({
+      input: ['text', 'image'],
+      output: ['text'],
+    });
+  });
+
   it('has MODEL_CAPABILITIES with modalities for Qwen3.6-35B-A3B', () => {
     expect(MODEL_CAPABILITIES['Qwen/Qwen3.6-35B-A3B'].modalities).toEqual({
       input: ['text', 'image'],
@@ -33,11 +47,6 @@ describe('constants', () => {
 
   it('does not have Qwen3.5-35B-A3B in MODEL_CAPABILITIES', () => {
     expect(MODEL_CAPABILITIES['Qwen/Qwen3.5-35B-A3B']).toBeUndefined();
-  });
-
-  it('does not have any -fast models in MODEL_CAPABILITIES', () => {
-    const fastKeys = Object.keys(MODEL_CAPABILITIES).filter((k) => k.endsWith('-fast'));
-    expect(fastKeys).toHaveLength(0);
   });
 
   it('every entry has a valid output limit', () => {
