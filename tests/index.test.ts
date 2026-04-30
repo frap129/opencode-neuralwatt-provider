@@ -28,7 +28,7 @@ function makeEmptyLegacyProvider(): Provider {
   return {} as unknown as Provider;
 }
 
-function makeModelInput(modelId: string): { sessionID?: string; model: Model } {
+function _makeModelInput(modelId: string): { sessionID?: string; model: Model } {
   return { model: { id: modelId } as unknown as Model };
 }
 
@@ -39,6 +39,16 @@ function mockFetchSuccess(data: Array<{ id: string }>) {
     json: () => Promise.resolve({ data }),
   }) as unknown as typeof fetch;
 }
+
+describe('module exports', () => {
+  it('exports v1 PluginModule shape with id and server', async () => {
+    const mod = await import('../src/index.ts');
+    expect(mod.default).toBeDefined();
+    expect(typeof mod.default).toBe('object');
+    expect(mod.default.id).toBe('opencode-neuralwatt-provider');
+    expect(typeof mod.default.server).toBe('function');
+  });
+});
 
 describe('NeuralWattPlugin auth hook', () => {
   const originalFetch = globalThis.fetch;

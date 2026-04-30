@@ -138,4 +138,7 @@ export const NeuralWattPlugin: Plugin = async ({ client }) => {
   };
 };
 
-export default NeuralWattPlugin;
+export default {
+  id: 'opencode-neuralwatt-provider',
+  server: NeuralWattPlugin,
+};
