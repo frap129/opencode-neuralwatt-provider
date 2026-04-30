@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/frap129/opencode-neuralwatt-provider/compare/v1.0.0...v1.0.1) (2026-04-30)
+
+
+### Bug Fixes
+
+* migrate to OpenCode v1 PluginModule format for plugin loader compatibility ([d4a845c](https://github.com/frap129/opencode-neuralwatt-provider/commit/d4a845c29b347bd586d40a2877836c208e06c092))
+
 ## 1.0.0 (2026-04-23)
 
 
