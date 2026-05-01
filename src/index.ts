@@ -1,6 +1,6 @@
 import type { Plugin } from '@opencode-ai/plugin';
 import type { Model as ModelV2 } from '@opencode-ai/sdk/v2';
-import { fetchModels, isQwenModel } from './models.ts';
+import { fetchModels, isQwenModel, configModelsFromCapabilities } from './models.ts';
 import { BASE_URL } from './constants.ts';
 import { cachedModels, fetchPromise, setCachedModels, setFetchPromise } from './cache.ts';
 
@@ -28,6 +28,9 @@ export const NeuralWattPlugin: Plugin = async ({ client }) => {
   return {
     config: async (config) => {
       config.provider = config.provider ?? {};
+      const needsUpdate = !config.provider.neuralwatt?.npm;
+
+      // In-place mutation for backward compatibility with pre-v1.14 OpenCode
       config.provider.neuralwatt = config.provider.neuralwatt ?? {
         npm: '@ai-sdk/openai-compatible',
         name: 'NeuralWatt',
@@ -35,6 +38,30 @@ export const NeuralWattPlugin: Plugin = async ({ client }) => {
           baseURL: BASE_URL,
         },
       };
+
+      // Persist via client API for OpenCode v1.14+ compatibility.
+      // The in-place mutation above is discarded by v1.14's immutable config service.
+      if (needsUpdate) {
+        await client.config
+          .update({
+            body: {
+              provider: {
+                neuralwatt: {
+                  npm: '@ai-sdk/openai-compatible',
+                  name: 'NeuralWatt',
+                  options: {
+                    baseURL: BASE_URL,
+                  },
+                  models: configModelsFromCapabilities() as Record<string, unknown>,
+                },
+              },
+            },
+          } as Parameters<typeof client.config.update>[0])
+          .catch(() => {
+            // Silently ignore — update may fail if server is not ready
+            // or another transient error occurs.
+          });
+      }
     },
 
     auth: {

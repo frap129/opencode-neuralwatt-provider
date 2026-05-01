@@ -268,3 +268,64 @@ describe('NeuralWattPlugin provider hook', () => {
     });
   });
 });
+
+describe('NeuralWattPlugin config hook', () => {
+  it('calls client.config.update when neuralwatt not configured', async () => {
+    const { NeuralWattPlugin } = await import('../src/index.ts');
+    const mockUpdate = vi.fn().mockResolvedValue(undefined);
+    const hooks = await NeuralWattPlugin({
+      client: { tui: { showToast: vi.fn() }, config: { update: mockUpdate } },
+    } as unknown as Parameters<Plugin>[0]);
+
+    const cfg: Record<string, unknown> = {};
+    await hooks.config!(cfg as Parameters<NonNullable<typeof hooks.config>>[0]);
+
+    expect(mockUpdate).toHaveBeenCalledTimes(1);
+    // In-place mutation still works for backward compat
+    expect((cfg as Record<string, unknown>).provider).toBeDefined();
+  });
+
+  it('calls client.config.update when provider key exists but neuralwatt missing', async () => {
+    const { NeuralWattPlugin } = await import('../src/index.ts');
+    const mockUpdate = vi.fn().mockResolvedValue(undefined);
+    const hooks = await NeuralWattPlugin({
+      client: { tui: { showToast: vi.fn() }, config: { update: mockUpdate } },
+    } as unknown as Parameters<Plugin>[0]);
+
+    const cfg: Record<string, unknown> = { provider: { anthropic: {} } };
+    await hooks.config!(cfg as Parameters<NonNullable<typeof hooks.config>>[0]);
+
+    expect(mockUpdate).toHaveBeenCalledTimes(1);
+  });
+
+  it('skips update when neuralwatt provider already configured with npm', async () => {
+    const { NeuralWattPlugin } = await import('../src/index.ts');
+    const mockUpdate = vi.fn().mockResolvedValue(undefined);
+    const hooks = await NeuralWattPlugin({
+      client: { tui: { showToast: vi.fn() }, config: { update: mockUpdate } },
+    } as unknown as Parameters<Plugin>[0]);
+
+    const cfg: Record<string, unknown> = {
+      provider: { neuralwatt: { npm: '@ai-sdk/openai-compatible', name: 'NeuralWatt' } },
+    };
+    await hooks.config!(cfg as Parameters<NonNullable<typeof hooks.config>>[0]);
+
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
+
+  it('does not throw when client.config.update fails', async () => {
+    const { NeuralWattPlugin } = await import('../src/index.ts');
+    const mockToast = vi.fn();
+    const mockUpdate = vi.fn().mockRejectedValue(new Error('Server not ready'));
+    const hooks = await NeuralWattPlugin({
+      client: { tui: { showToast: mockToast }, config: { update: mockUpdate } },
+    } as unknown as Parameters<Plugin>[0]);
+
+    const cfg: Record<string, unknown> = {};
+    await expect(
+      hooks.config!(cfg as Parameters<NonNullable<typeof hooks.config>>[0])
+    ).resolves.toBeUndefined();
+
+    expect(mockUpdate).toHaveBeenCalledTimes(1);
+  });
+});
