@@ -328,9 +328,9 @@ describe('configModelsFromCapabilities', () => {
 
   it('sets limit.output from MODEL_CAPABILITIES', () => {
     const result = configModelsFromCapabilities();
-    expect(result['Qwen/Qwen3.5-397B-A17B-FP8'].limit?.output).toBe(32768);
-    expect(result['zai-org/GLM-5.1-FP8'].limit?.output).toBe(65536);
-    expect(result['openai/gpt-oss-20b'].limit?.output).toBe(8192);
+    expect(result['Qwen/Qwen3.5-397B-A17B-FP8'].limit.output).toBe(32768);
+    expect(result['zai-org/GLM-5.1-FP8'].limit.output).toBe(65536);
+    expect(result['openai/gpt-oss-20b'].limit.output).toBe(8192);
   });
 
   it('sets temperature and tool_call true for all models', () => {
@@ -391,5 +391,12 @@ describe('configModelsFromCapabilities', () => {
     const result = configModelsFromCapabilities();
     const qwen = result['Qwen/Qwen3.6-35B-A3B'];
     expect(qwen.options).toEqual({ chat_template_kwargs: { preserve_thinking: true } });
+  });
+
+  it('omits modalities for models without modality data', () => {
+    const result = configModelsFromCapabilities();
+    expect(result['Qwen/Qwen3.5-397B-A17B-FP8'].modalities).toBeUndefined();
+    expect(result['openai/gpt-oss-20b'].modalities).toBeUndefined();
+    expect(result['zai-org/GLM-5.1-FP8'].modalities).toBeUndefined();
   });
 });

@@ -110,7 +110,10 @@ export interface ConfigModelEntry {
   reasoning: boolean;
   attachment: boolean;
   tool_call: boolean;
-  modalities?: { input: string[]; output: string[] };
+  modalities?: {
+    readonly input: readonly ('text' | 'image')[];
+    readonly output: readonly 'text'[];
+  };
   options?: Record<string, unknown>;
 }
 
@@ -118,16 +121,14 @@ export function configModelsFromCapabilities(): Record<string, ConfigModelEntry>
   const result: Record<string, ConfigModelEntry> = {};
   for (const [id, caps] of Object.entries(MODEL_CAPABILITIES)) {
     const isFast = id.endsWith('-fast');
-    const hasImage = Boolean(caps.modalities?.input.includes('image' as const));
+    const hasImage = Boolean(caps.modalities?.input.includes('image'));
     result[id] = {
       limit: { output: caps.limit.output },
       temperature: true,
-      reasoning: isFast ? false : true,
+      reasoning: !isFast,
       attachment: hasImage,
       tool_call: true,
-      ...(caps.modalities
-        ? { modalities: caps.modalities as { input: string[]; output: string[] } }
-        : {}),
+      ...(caps.modalities ? { modalities: caps.modalities } : {}),
       ...(caps.options ? { options: caps.options } : {}),
     };
   }
