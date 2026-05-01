@@ -281,6 +281,24 @@ describe('NeuralWattPlugin config hook', () => {
     await hooks.config!(cfg as Parameters<NonNullable<typeof hooks.config>>[0]);
 
     expect(mockUpdate).toHaveBeenCalledTimes(1);
+    expect(mockUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        body: expect.objectContaining({
+          provider: expect.objectContaining({
+            neuralwatt: expect.objectContaining({
+              npm: '@ai-sdk/openai-compatible',
+              name: 'NeuralWatt',
+              options: { baseURL: 'https://api.neuralwatt.com/v1' },
+            }),
+          }),
+        }),
+      })
+    );
+    const callArgs = mockUpdate.mock.calls[0][0] as {
+      body: { provider: { neuralwatt: { models: Record<string, unknown> } } };
+    };
+    expect(callArgs.body.provider.neuralwatt.models).toBeDefined();
+    expect(Object.keys(callArgs.body.provider.neuralwatt.models).length).toBeGreaterThan(0);
     // In-place mutation still works for backward compat
     expect((cfg as Record<string, unknown>).provider).toBeDefined();
   });

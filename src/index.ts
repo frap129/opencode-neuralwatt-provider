@@ -25,19 +25,19 @@ export const NeuralWattPlugin: Plugin = async ({ client }) => {
     });
   }
 
+  const neuralwattProviderConfig = {
+    npm: '@ai-sdk/openai-compatible',
+    name: 'NeuralWatt',
+    options: { baseURL: BASE_URL },
+  } as const;
+
   return {
     config: async (config) => {
       config.provider = config.provider ?? {};
-      const needsUpdate = !config.provider.neuralwatt?.npm;
+      const needsUpdate = config.provider.neuralwatt?.npm == null;
 
       // In-place mutation for backward compatibility with pre-v1.14 OpenCode
-      config.provider.neuralwatt = config.provider.neuralwatt ?? {
-        npm: '@ai-sdk/openai-compatible',
-        name: 'NeuralWatt',
-        options: {
-          baseURL: BASE_URL,
-        },
-      };
+      config.provider.neuralwatt = config.provider.neuralwatt ?? neuralwattProviderConfig;
 
       // Persist via client API for OpenCode v1.14+ compatibility.
       // The in-place mutation above is discarded by v1.14's immutable config service.
@@ -47,19 +47,18 @@ export const NeuralWattPlugin: Plugin = async ({ client }) => {
             body: {
               provider: {
                 neuralwatt: {
-                  npm: '@ai-sdk/openai-compatible',
-                  name: 'NeuralWatt',
-                  options: {
-                    baseURL: BASE_URL,
-                  },
+                  ...neuralwattProviderConfig,
                   models: configModelsFromCapabilities() as Record<string, unknown>,
                 },
               },
             },
           } as Parameters<typeof client.config.update>[0])
-          .catch(() => {
-            // Silently ignore — update may fail if server is not ready
-            // or another transient error occurs.
+          .catch((err) => {
+            // eslint-disable-next-line no-console
+            console.debug(
+              '[neuralwatt] client.config.update failed (transient, expected during startup):',
+              err instanceof Error ? err.message : String(err)
+            );
           });
       }
     },
