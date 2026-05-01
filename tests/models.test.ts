@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { isQwenModel, deriveModelName, transformModel, fetchModels } from '../src/models.ts';
+import {
+  isQwenModel,
+  deriveModelName,
+  transformModel,
+  fetchModels,
+  configModelsFromCapabilities,
+} from '../src/models.ts';
 
 describe('isQwenModel', () => {
   it('returns true for model IDs containing qwen (case-insensitive)', () => {
@@ -296,5 +302,94 @@ describe('fetchModels', () => {
     const result = await fetchModels('key', vi.fn());
     expect(Object.keys(result)).toHaveLength(1);
     expect(result['same-model']).toBeDefined();
+  });
+});
+
+describe('configModelsFromCapabilities', () => {
+  it('returns all known model IDs', () => {
+    const result = configModelsFromCapabilities();
+    expect(result['Qwen/Qwen3.5-397B-A17B-FP8']).toBeDefined();
+    expect(result['qwen3.5-397b-fast']).toBeDefined();
+    expect(result['moonshotai/Kimi-K2.5']).toBeDefined();
+    expect(result['kimi-k2.5-fast']).toBeDefined();
+    expect(result['moonshotai/Kimi-K2.6']).toBeDefined();
+    expect(result['kimi-k2.6-fast']).toBeDefined();
+    expect(result['zai-org/GLM-5.1-FP8']).toBeDefined();
+    expect(result['glm-5.1-fast']).toBeDefined();
+    expect(result['zai-org/GLM-5-FP8']).toBeDefined();
+    expect(result['glm-5-fast']).toBeDefined();
+    expect(result['MiniMaxAI/MiniMax-M2.5']).toBeDefined();
+    expect(result['mistralai/Devstral-Small-2-24B-Instruct-2512']).toBeDefined();
+    expect(result['Qwen/Qwen3.6-35B-A3B']).toBeDefined();
+    expect(result['qwen3.6-35b-fast']).toBeDefined();
+    expect(result['openai/gpt-oss-20b']).toBeDefined();
+    expect(Object.keys(result)).toHaveLength(15);
+  });
+
+  it('sets limit.output from MODEL_CAPABILITIES', () => {
+    const result = configModelsFromCapabilities();
+    expect(result['Qwen/Qwen3.5-397B-A17B-FP8'].limit?.output).toBe(32768);
+    expect(result['zai-org/GLM-5.1-FP8'].limit?.output).toBe(65536);
+    expect(result['openai/gpt-oss-20b'].limit?.output).toBe(8192);
+  });
+
+  it('sets temperature and tool_call true for all models', () => {
+    const result = configModelsFromCapabilities();
+    for (const model of Object.values(result)) {
+      expect(model.temperature).toBe(true);
+      expect(model.tool_call).toBe(true);
+    }
+  });
+
+  it('sets reasoning=false for -fast variant models', () => {
+    const result = configModelsFromCapabilities();
+    expect(result['qwen3.5-397b-fast'].reasoning).toBe(false);
+    expect(result['kimi-k2.5-fast'].reasoning).toBe(false);
+    expect(result['kimi-k2.6-fast'].reasoning).toBe(false);
+    expect(result['glm-5-fast'].reasoning).toBe(false);
+    expect(result['glm-5.1-fast'].reasoning).toBe(false);
+    expect(result['qwen3.6-35b-fast'].reasoning).toBe(false);
+  });
+
+  it('sets reasoning=true for known non-fast models', () => {
+    const result = configModelsFromCapabilities();
+    expect(result['Qwen/Qwen3.5-397B-A17B-FP8'].reasoning).toBe(true);
+    expect(result['moonshotai/Kimi-K2.5'].reasoning).toBe(true);
+    expect(result['moonshotai/Kimi-K2.6'].reasoning).toBe(true);
+    expect(result['zai-org/GLM-5.1-FP8'].reasoning).toBe(true);
+    expect(result['zai-org/GLM-5-FP8'].reasoning).toBe(true);
+    expect(result['MiniMaxAI/MiniMax-M2.5'].reasoning).toBe(true);
+    expect(result['Qwen/Qwen3.6-35B-A3B'].reasoning).toBe(true);
+    expect(result['openai/gpt-oss-20b'].reasoning).toBe(true);
+  });
+
+  it('sets modalities for models with image input', () => {
+    const result = configModelsFromCapabilities();
+    const kimi = result['moonshotai/Kimi-K2.5'];
+    expect(kimi.modalities?.input).toEqual(['text', 'image']);
+    expect(kimi.modalities?.output).toEqual(['text']);
+    expect(kimi.attachment).toBe(true);
+  });
+
+  it('sets attachment=true only for models with image input', () => {
+    const result = configModelsFromCapabilities();
+    // Models with image input
+    expect(result['moonshotai/Kimi-K2.5'].attachment).toBe(true);
+    expect(result['kimi-k2.5-fast'].attachment).toBe(true);
+    expect(result['moonshotai/Kimi-K2.6'].attachment).toBe(true);
+    expect(result['kimi-k2.6-fast'].attachment).toBe(true);
+    expect(result['mistralai/Devstral-Small-2-24B-Instruct-2512'].attachment).toBe(true);
+    expect(result['Qwen/Qwen3.6-35B-A3B'].attachment).toBe(true);
+    expect(result['qwen3.6-35b-fast'].attachment).toBe(true);
+    // Models without image input
+    expect(result['Qwen/Qwen3.5-397B-A17B-FP8'].attachment).toBe(false);
+    expect(result['zai-org/GLM-5.1-FP8'].attachment).toBe(false);
+    expect(result['openai/gpt-oss-20b'].attachment).toBe(false);
+  });
+
+  it('preserves options from MODEL_CAPABILITIES when present', () => {
+    const result = configModelsFromCapabilities();
+    const qwen = result['Qwen/Qwen3.6-35B-A3B'];
+    expect(qwen.options).toEqual({ chat_template_kwargs: { preserve_thinking: true } });
   });
 });

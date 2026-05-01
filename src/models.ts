@@ -103,3 +103,33 @@ export async function fetchModels(
 
   return models;
 }
+
+export interface ConfigModelEntry {
+  limit: { output: number };
+  temperature: boolean;
+  reasoning: boolean;
+  attachment: boolean;
+  tool_call: boolean;
+  modalities?: { input: string[]; output: string[] };
+  options?: Record<string, unknown>;
+}
+
+export function configModelsFromCapabilities(): Record<string, ConfigModelEntry> {
+  const result: Record<string, ConfigModelEntry> = {};
+  for (const [id, caps] of Object.entries(MODEL_CAPABILITIES)) {
+    const isFast = id.endsWith('-fast');
+    const hasImage = Boolean(caps.modalities?.input.includes('image' as const));
+    result[id] = {
+      limit: { output: caps.limit.output },
+      temperature: true,
+      reasoning: isFast ? false : true,
+      attachment: hasImage,
+      tool_call: true,
+      ...(caps.modalities
+        ? { modalities: caps.modalities as { input: string[]; output: string[] } }
+        : {}),
+      ...(caps.options ? { options: caps.options } : {}),
+    };
+  }
+  return result;
+}
