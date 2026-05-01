@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.0](https://github.com/frap129/opencode-neuralwatt-provider/compare/v1.0.1...v1.1.0) (2026-05-01)
+
+
+### Features
+
+* add configModelsFromCapabilities for static model config export ([929f78d](https://github.com/frap129/opencode-neuralwatt-provider/commit/929f78dacdbe8dbdcdf605fb652f1e09ba5b7632))
+
+
+### Bug Fixes
+
+* persist provider config via client.config.update for v1.14 compat ([f0594a3](https://github.com/frap129/opencode-neuralwatt-provider/commit/f0594a3e4e2b0fc7aec1710e57edc87ab2ec0027))
+
 ## [1.0.1](https://github.com/frap129/opencode-neuralwatt-provider/compare/v1.0.0...v1.0.1) (2026-04-30)
 
 
