@@ -314,6 +314,8 @@ describe('NeuralWattPlugin config hook', () => {
     await hooks.config!(cfg as Parameters<NonNullable<typeof hooks.config>>[0]);
 
     expect(mockUpdate).toHaveBeenCalledTimes(1);
+    // Verify in-place mutation for backward compat
+    expect((cfg as { provider: Record<string, unknown> }).provider.neuralwatt).toBeDefined();
   });
 
   it('skips update when neuralwatt provider already configured with npm', async () => {
@@ -335,6 +337,7 @@ describe('NeuralWattPlugin config hook', () => {
     const { NeuralWattPlugin } = await import('../src/index.ts');
     const mockToast = vi.fn();
     const mockUpdate = vi.fn().mockRejectedValue(new Error('Server not ready'));
+    const debugSpy = vi.spyOn(console, 'debug').mockImplementation(() => {});
     const hooks = await NeuralWattPlugin({
       client: { tui: { showToast: mockToast }, config: { update: mockUpdate } },
     } as unknown as Parameters<Plugin>[0]);
@@ -345,5 +348,11 @@ describe('NeuralWattPlugin config hook', () => {
     ).resolves.toBeUndefined();
 
     expect(mockUpdate).toHaveBeenCalledTimes(1);
+    expect(debugSpy).toHaveBeenCalledWith(
+      expect.stringContaining('client.config.update failed'),
+      'Server not ready'
+    );
+
+    debugSpy.mockRestore();
   });
 });
